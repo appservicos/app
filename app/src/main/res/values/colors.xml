@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#4169BD</color>
+    <color name="colorPrimaryDark">#6D6DA7</color>
+    <color name="colorAccent">#000E61</color>
+
+    <color name="backgroundLoginCadastro">#AAA6A6</color>
+
+    <color name="btnLogin">#FFFFFF</color>
+    <color name="brnCadastro">#7373C4</color>
+
+</resources>
