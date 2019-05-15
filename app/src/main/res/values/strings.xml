@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Sevice</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="descricaoLogo">Logo do app</string>
+    <string name="btnCadastrar">Cadastrar-se</string>
+    <string name="btnEntrar">Entrar</string>
+    <string name="tituloTelaCadastro">Cadastre sua conta</string>
+    <string name="tituloTelaLogin">Acesse sua conta</string>
+    <string name="hintLoginEmail">E-mail</string>
+    <string name="hintLoginSenha">Senha</string>
+    <string name="hintCadastroNome">Nome completo</string>
+    <string name="escolhaCadastroCliente">Cliente</string>
+    <string name="descricaoTipoCadastro">Tipo de cadasto:</string>
+    <string name="escolhaCadastroPrestador">Prestador</string>
+    <string name="title_activity_cliente">ClienteActivity</string>
+</resources>
