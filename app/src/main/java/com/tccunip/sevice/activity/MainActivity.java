@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, LoginActivity.class));
     }
 
+    //Método para que o usuário permaneca logado mesmo fechando o App
     @Override
     protected void onStart() {
         super.onStart();

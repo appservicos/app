@@ -13,4 +13,7 @@
     <string name="descricaoTipoCadastro">Tipo de cadasto:</string>
     <string name="escolhaCadastroPrestador">Prestador</string>
     <string name="title_activity_cliente">ClienteActivity</string>
+    <string name="meu_local">Meu local</string>
+    <string name="digite_seu_destino">Digite ???</string>
+    <string name="chamar_prestador">Chamar Prestador</string>
 </resources>
