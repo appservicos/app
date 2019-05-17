@@ -14,6 +14,8 @@
     <string name="escolhaCadastroPrestador">Prestador</string>
     <string name="title_activity_cliente">ClienteActivity</string>
     <string name="meu_local">Meu local</string>
-    <string name="digite_seu_destino">*TESTE* - Encanador</string>
+    <string name="digite_seu_destino">Endereço</string>
+    <string name="servico_exemplo">*EXEMPLO* Encanador</string>
     <string name="chamar_prestador">Chamar Prestador</string>
+    <string name="utilizar_local_atual">Utilizar local atual</string>
 </resources>
