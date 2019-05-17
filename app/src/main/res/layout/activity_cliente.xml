@@ -58,6 +58,7 @@
             android:drawableTint="@android:color/darker_gray"
             android:drawablePadding="6dp"
             android:ems="10"
+            android:enabled="false"
             android:hint="@string/digite_seu_destino"
             android:inputType="textPersonName"
             android:textColor="@android:color/darker_gray"
@@ -72,6 +73,7 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_gravity="bottom"
+        android:onClick="chamarPrestador"
         android:text="@string/chamar_prestador"
         android:theme="@style/botaoPadrao" />
 
