@@ -74,8 +74,6 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cliente);
 
-        firebaseRef = ConfiguracaoFirebase.getFirebaseDatabase();
-
         inicializarComponentes();
 
         verificaStatusRequisicao();
@@ -311,6 +309,7 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
         btnChamarPrestador = findViewById(R.id.btnChamarPrestador);
 
         autenticacao = ConfiguracaoFirebase.getFirebaseAuth();
+        firebaseRef = ConfiguracaoFirebase.getFirebaseDatabase();
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
