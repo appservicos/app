@@ -49,10 +49,12 @@ import com.tccunip.sevice.model.Requisicao;
 import com.tccunip.sevice.model.Usuario;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-public class ClienteActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ClienteActivity extends AppCompatActivity implements OnMapReadyCallback{
 
     private GoogleMap mMap;
     private FirebaseAuth autenticacao;
@@ -83,16 +85,29 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
         Usuario usuarioLogado = UsuarioFirebase.getDadosUsuarioLogado();
 
         DatabaseReference requisicoes = firebaseRef.child("requisicoes");
-        Query requisicaoPesquisa = requisicoes.orderByChild("passageiro/id")
+        Query requisicaoPesquisa = requisicoes.orderByChild("cliente/id")
                 .equalTo(usuarioLogado.getId());
 
         requisicaoPesquisa.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot ds: dataSnapshot.getChildren()){
-                    requisicao = ds.getValue(Requisicao.class);
-                    
 
+                List<Requisicao> lista = new ArrayList<>();
+                for (DataSnapshot ds: dataSnapshot.getChildren()){
+                    lista.add(ds.getValue(Requisicao.class));
+                }
+
+                Collections.reverse(lista);
+                if (lista != null && lista.size()>0) {
+                    requisicao = lista.get(0);
+
+                    switch (requisicao.getStatus()){
+                        case Requisicao.STATUS_AGUARDANDO :
+                            linearLayoutDestino.setVisibility(View.GONE);
+                            btnChamarPrestador.setText("Cancelar");
+                            prestadorChamado = true;
+                            break;
+                    }
                 }
             }
 
