@@ -10,17 +10,21 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -32,6 +36,11 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.tccunip.sevice.R;
 import com.tccunip.sevice.config.ConfiguracaoFirebase;
 import com.tccunip.sevice.helper.UsuarioFirebase;
@@ -50,15 +59,49 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
     private LocationManager locationManager;
     private LocationListener locationListener;
     private LatLng localCliente;
+    private boolean prestadorChamado = false;
+    private DatabaseReference firebaseRef;
+    private Requisicao requisicao;
 
     private EditText localDestino;
+    private LinearLayout linearLayoutDestino;
+    private Button btnChamarPrestador;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cliente);
 
+        firebaseRef = ConfiguracaoFirebase.getFirebaseDatabase();
+
         inicializarComponentes();
+
+        verificaStatusRequisicao();
+    }
+
+    private void verificaStatusRequisicao(){
+        Usuario usuarioLogado = UsuarioFirebase.getDadosUsuarioLogado();
+
+        DatabaseReference requisicoes = firebaseRef.child("requisicoes");
+        Query requisicaoPesquisa = requisicoes.orderByChild("passageiro/id")
+                .equalTo(usuarioLogado.getId());
+
+        requisicaoPesquisa.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot ds: dataSnapshot.getChildren()){
+                    requisicao = ds.getValue(Requisicao.class);
+                    
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
     }
 
     /**
@@ -92,50 +135,56 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
     }
 
     public void chamarPrestador(View view){
-        String enderecoDestino = localDestino.getText().toString();
+        if (!prestadorChamado){
 
-        if(!enderecoDestino.equals("") || enderecoDestino != null){
-            Address addressDestino = recuperarEndereco(enderecoDestino);
+            String enderecoDestino = localDestino.getText().toString();
 
-            if (addressDestino != null){
+            if(!enderecoDestino.equals("") || enderecoDestino != null){
+                Address addressDestino = recuperarEndereco(enderecoDestino);
 
-                final Destino destino = new Destino();
-                destino.setCidade(addressDestino.getAdminArea());
-                destino.setCep(addressDestino.getPostalCode());
-                destino.setBairro(addressDestino.getSubLocality());
-                destino.setRua(addressDestino.getThoroughfare());
-                destino.setNumero(addressDestino.getFeatureName());
-                destino.setLatitude(String.valueOf(addressDestino.getLatitude()));
-                destino.setLongitude(String.valueOf(addressDestino.getLongitude()));
+                if (addressDestino != null){
 
-                StringBuilder mensagemConfirmacao = new StringBuilder();
-                mensagemConfirmacao.append("Cidade: " + destino.getCidade());
-                mensagemConfirmacao.append("\nRua: " + destino.getRua());
-                mensagemConfirmacao.append("\nBairro: " + destino.getBairro());
-                mensagemConfirmacao.append("\nNúmero: " + destino.getNumero());
-                mensagemConfirmacao.append("\nCEP: " + destino.getCep());
+                    final Destino destino = new Destino();
+                    destino.setCidade(addressDestino.getAdminArea());
+                    destino.setCep(addressDestino.getPostalCode());
+                    destino.setBairro(addressDestino.getSubLocality());
+                    destino.setRua(addressDestino.getThoroughfare());
+                    destino.setNumero(addressDestino.getFeatureName());
+                    destino.setLatitude(String.valueOf(addressDestino.getLatitude()));
+                    destino.setLongitude(String.valueOf(addressDestino.getLongitude()));
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                        .setTitle("Confirme o endereço:")
-                        .setMessage(mensagemConfirmacao)
-                        .setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                salvarRequisicao(destino);
-                            }
-                        }).setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                            }
-                        });
-                AlertDialog dialog = builder.create();
-                dialog.show();
+                    StringBuilder mensagemConfirmacao = new StringBuilder();
+                    mensagemConfirmacao.append("Cidade: " + destino.getCidade());
+                    mensagemConfirmacao.append("\nRua: " + destino.getRua());
+                    mensagemConfirmacao.append("\nBairro: " + destino.getBairro());
+                    mensagemConfirmacao.append("\nNúmero: " + destino.getNumero());
+                    mensagemConfirmacao.append("\nCEP: " + destino.getCep());
 
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                            .setTitle("Confirme o endereço:")
+                            .setMessage(mensagemConfirmacao)
+                            .setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    salvarRequisicao(destino);
+                                    prestadorChamado = true;
+                                }
+                            }).setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            });
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+
+                }
+            }else {
+                Toast.makeText(this,
+                        "Informe um endereço ou utilize sua localização atual !",
+                        Toast.LENGTH_SHORT).show();
             }
         }else {
-            Toast.makeText(this,
-                    "Informe um endereço ou utilize sua localização atual !",
-                    Toast.LENGTH_SHORT).show();
+            prestadorChamado = false;
         }
     }
 
@@ -151,6 +200,9 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
         requisicao.setCliente(usuarioCliente);
         requisicao.setStatus(Requisicao.STATUS_AGUARDANDO);
         requisicao.salvar();
+
+        linearLayoutDestino.setVisibility(View.GONE);
+        btnChamarPrestador.setText("Cancelar");
 
 
     }
@@ -240,6 +292,8 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
         setSupportActionBar(toolbar);
 
         localDestino = findViewById(R.id.localDestino);
+        linearLayoutDestino = findViewById(R.id.linearLayotDestino);
+        btnChamarPrestador = findViewById(R.id.btnChamarPrestador);
 
         autenticacao = ConfiguracaoFirebase.getFirebaseAuth();
 
