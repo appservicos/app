@@ -76,6 +76,7 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
     public void opcaoLocal(View view){
         CheckBox checkLocal = findViewById(R.id.checkLocal);
         if (checkLocal.isChecked()){
+            this.localDestino.setText("");
             this.localDestino.setVisibility(View.GONE);
             EditText meuLocal = findViewById(R.id.meuLocal);
             meuLocal.setVisibility(View.VISIBLE);

@@ -71,7 +71,7 @@
             android:ems="10"
             android:hint="@string/digite_seu_destino"
             android:importantForAutofill="no"
-            android:inputType="textPersonName"
+            android:inputType="textPostalAddress"
             android:textColor="@android:color/darker_gray"
             android:textColorHint="@android:color/darker_gray"
             android:textSize="18sp"
