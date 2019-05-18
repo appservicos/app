@@ -34,7 +34,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.tccunip.sevice.R;
 import com.tccunip.sevice.config.ConfiguracaoFirebase;
+import com.tccunip.sevice.helper.UsuarioFirebase;
 import com.tccunip.sevice.model.Destino;
+import com.tccunip.sevice.model.Requisicao;
+import com.tccunip.sevice.model.Usuario;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,6 +49,7 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
     private FirebaseAuth autenticacao;
     private LocationManager locationManager;
     private LocationListener locationListener;
+    private LatLng localCliente;
 
     private EditText localDestino;
 
@@ -95,7 +99,7 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
 
             if (addressDestino != null){
 
-                Destino destino = new Destino();
+                final Destino destino = new Destino();
                 destino.setCidade(addressDestino.getAdminArea());
                 destino.setCep(addressDestino.getPostalCode());
                 destino.setBairro(addressDestino.getSubLocality());
@@ -117,25 +121,40 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
                         .setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                //salvara requisicao
+                                salvarRequisicao(destino);
                             }
                         }).setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-
                             }
                         });
                 AlertDialog dialog = builder.create();
                 dialog.show();
 
             }
-
         }else {
             Toast.makeText(this,
                     "Informe um endereço ou utilize sua localização atual !",
                     Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void salvarRequisicao(Destino destino){
+
+        Requisicao requisicao = new Requisicao();
+        requisicao.setDestino(destino);
+
+        Usuario usuarioCliente = UsuarioFirebase.getDadosUsuarioLogado();
+        usuarioCliente.setLatitude(String.valueOf(localCliente.latitude));
+        usuarioCliente.setLongitude(String.valueOf(localCliente.longitude));
+
+        requisicao.setCliente(usuarioCliente);
+        requisicao.setStatus(Requisicao.STATUS_AGUARDANDO);
+        requisicao.salvar();
+
+
+    }
+
     private Address recuperarEndereco(String endereco){
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
@@ -157,17 +176,17 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
             public void onLocationChanged(Location location) {
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
-                LatLng meuLocal = new LatLng(latitude, longitude);
+                localCliente = new LatLng(latitude, longitude);
 
                 mMap.clear();
                 mMap.addMarker(
                         new MarkerOptions()
-                                .position(meuLocal)
+                                .position(localCliente)
                                 .title("Meu Local")
                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.cliente))
                 );
                 mMap.moveCamera(
-                        CameraUpdateFactory.newLatLngZoom(meuLocal, 15)
+                        CameraUpdateFactory.newLatLngZoom(localCliente, 15)
                 );
             }
 
