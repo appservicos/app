@@ -134,7 +134,7 @@ public class ServicoActivity extends AppCompatActivity implements OnMapReadyCall
                 new MarkerOptions()
                         .position(localizacao)
                         .title(titulo)
-                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.prestador))
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.cliente))
         );
         mMap.moveCamera(
                 CameraUpdateFactory.newLatLngZoom(localizacao, 15)
@@ -196,8 +196,8 @@ public class ServicoActivity extends AppCompatActivity implements OnMapReadyCall
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER,
-                    5000,
+                    LocationManager.GPS_PROVIDER,
+                    0,
                     10,
                     locationListener
             );

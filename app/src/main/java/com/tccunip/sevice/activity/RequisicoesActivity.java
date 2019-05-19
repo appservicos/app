@@ -99,9 +99,9 @@ public class RequisicoesActivity extends AppCompatActivity {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER,
+                    LocationManager.GPS_PROVIDER,
                     0,
-                    0,
+                    10,
                     locationListener
             );
         }
