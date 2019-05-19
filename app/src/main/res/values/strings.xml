@@ -17,5 +17,10 @@
     <string name="digite_seu_destino">Endereço</string>
     <string name="servico_exemplo">*EXEMPLO* Encanador</string>
     <string name="chamar_prestador">Chamar Prestador</string>
+    <string name="aceitar_servico">Aceitar serviço</string>
     <string name="utilizar_local_atual">Utilizar local atual</string>
+    <string name="aguardando_requisicoes">Aguardando Requisiões</string>
+    <string name="nome_do_cliente">Nome do cliente</string>
+    <string name="_0_km_aproximadamente">0 km - aproximadamente</string>
+    <string name="title_activity_servico">ServicoActivity</string>
 </resources>

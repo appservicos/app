@@ -23,6 +23,7 @@
     <include layout="@layout/content_cliente" />
 
     <LinearLayout
+        android:id="@+id/linearLayotDestino"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"
@@ -82,10 +83,9 @@
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:background="@android:color/white"
-            android:drawableStart="@drawable/circulo_verde"
-            android:drawableLeft="@drawable/circulo_verde"
+            android:drawableStart="@drawable/exemplo_encanador"
+            android:drawableLeft="@drawable/exemplo_encanador"
             android:drawablePadding="6dp"
-            android:drawableTint="@android:color/darker_gray"
             android:ems="10"
             android:enabled="false"
             android:hint="@string/servico_exemplo"

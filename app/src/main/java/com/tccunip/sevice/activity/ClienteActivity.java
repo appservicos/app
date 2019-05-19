@@ -10,17 +10,21 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -32,22 +36,39 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.tccunip.sevice.R;
 import com.tccunip.sevice.config.ConfiguracaoFirebase;
+import com.tccunip.sevice.helper.UsuarioFirebase;
 import com.tccunip.sevice.model.Destino;
+import com.tccunip.sevice.model.Requisicao;
+import com.tccunip.sevice.model.Usuario;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-public class ClienteActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class ClienteActivity extends AppCompatActivity implements OnMapReadyCallback{
 
     private GoogleMap mMap;
     private FirebaseAuth autenticacao;
     private LocationManager locationManager;
     private LocationListener locationListener;
+    private LatLng localCliente;
+    private boolean prestadorChamado = false;
+    private DatabaseReference firebaseRef;
+    private Requisicao requisicao;
 
     private EditText localDestino;
+    private LinearLayout linearLayoutDestino;
+    private Button btnChamarPrestador;
+    private CheckBox checkLocal;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +76,46 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
         setContentView(R.layout.activity_cliente);
 
         inicializarComponentes();
+
+        verificaStatusRequisicao();
+    }
+
+    private void verificaStatusRequisicao(){
+        Usuario usuarioLogado = UsuarioFirebase.getDadosUsuarioLogado();
+
+        DatabaseReference requisicoes = firebaseRef.child("requisicoes");
+        Query requisicaoPesquisa = requisicoes.orderByChild("cliente/id")
+                .equalTo(usuarioLogado.getId());
+
+        requisicaoPesquisa.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                List<Requisicao> lista = new ArrayList<>();
+                for (DataSnapshot ds: dataSnapshot.getChildren()){
+                    lista.add(ds.getValue(Requisicao.class));
+                }
+
+                Collections.reverse(lista);
+                if (lista != null && lista.size()>0) {
+                    requisicao = lista.get(0);
+
+                    switch (requisicao.getStatus()){
+                        case Requisicao.STATUS_AGUARDANDO :
+                            linearLayoutDestino.setVisibility(View.GONE);
+                            btnChamarPrestador.setText("Cancelar");
+                            prestadorChamado = true;
+                            break;
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
     }
 
     /**
@@ -74,7 +135,6 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
     }
 
     public void opcaoLocal(View view){
-        CheckBox checkLocal = findViewById(R.id.checkLocal);
         if (checkLocal.isChecked()){
             this.localDestino.setText("");
             this.localDestino.setVisibility(View.GONE);
@@ -88,54 +148,86 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
     }
 
     public void chamarPrestador(View view){
-        String enderecoDestino = localDestino.getText().toString();
+        if (!prestadorChamado) {
+            if (checkLocal.isChecked()){
 
-        if(!enderecoDestino.equals("") || enderecoDestino != null){
-            Address addressDestino = recuperarEndereco(enderecoDestino);
+                final Destino destino = new Destino();
+                destino.setLatitude(String.valueOf(localCliente.latitude));
+                destino.setLongitude(String.valueOf(localCliente.longitude));
 
-            if (addressDestino != null){
+                salvarRequisicao(destino);
+            }else {
+                String enderecoDestino = localDestino.getText().toString();
 
-                Destino destino = new Destino();
-                destino.setCidade(addressDestino.getAdminArea());
-                destino.setCep(addressDestino.getPostalCode());
-                destino.setBairro(addressDestino.getSubLocality());
-                destino.setRua(addressDestino.getThoroughfare());
-                destino.setNumero(addressDestino.getFeatureName());
-                destino.setLatitude(String.valueOf(addressDestino.getLatitude()));
-                destino.setLongitude(String.valueOf(addressDestino.getLongitude()));
+                if(!enderecoDestino.equals("") || enderecoDestino != null){
+                    Address addressDestino = recuperarEndereco(enderecoDestino);
 
-                StringBuilder mensagemConfirmacao = new StringBuilder();
-                mensagemConfirmacao.append("Cidade: " + destino.getCidade());
-                mensagemConfirmacao.append("\nRua: " + destino.getRua());
-                mensagemConfirmacao.append("\nBairro: " + destino.getBairro());
-                mensagemConfirmacao.append("\nNúmero: " + destino.getNumero());
-                mensagemConfirmacao.append("\nCEP: " + destino.getCep());
+                    if (addressDestino != null){
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                        .setTitle("Confirme o endereço:")
-                        .setMessage(mensagemConfirmacao)
-                        .setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                //salvara requisicao
-                            }
-                        }).setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
+                        final Destino destino = new Destino();
+                        destino.setCidade(addressDestino.getAdminArea());
+                        destino.setCep(addressDestino.getPostalCode());
+                        destino.setBairro(addressDestino.getSubLocality());
+                        destino.setRua(addressDestino.getThoroughfare());
+                        destino.setNumero(addressDestino.getFeatureName());
+                        destino.setLatitude(String.valueOf(addressDestino.getLatitude()));
+                        destino.setLongitude(String.valueOf(addressDestino.getLongitude()));
 
-                            }
-                        });
-                AlertDialog dialog = builder.create();
-                dialog.show();
+                        StringBuilder mensagemConfirmacao = new StringBuilder();
+                        mensagemConfirmacao.append("Cidade: " + destino.getCidade());
+                        mensagemConfirmacao.append("\nRua: " + destino.getRua());
+                        mensagemConfirmacao.append("\nBairro: " + destino.getBairro());
+                        mensagemConfirmacao.append("\nNúmero: " + destino.getNumero());
+                        mensagemConfirmacao.append("\nCEP: " + destino.getCep());
 
-            }
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                                .setTitle("Confirme o endereço:")
+                                .setMessage(mensagemConfirmacao)
+                                .setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        salvarRequisicao(destino);
+                                        prestadorChamado = true;
+                                    }
+                                }).setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                    }
+                                });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
 
-        }else {
-            Toast.makeText(this,
-                    "Informe um endereço ou utilize sua localização atual !",
-                    Toast.LENGTH_SHORT).show();
+                    }
+                }else {
+                    Toast.makeText(this,
+                            "Informe um endereço ou utilize sua localização atual !",
+                            Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+            prestadorChamado = false;
         }
     }
+
+    private void salvarRequisicao(Destino destino){
+
+        Requisicao requisicao = new Requisicao();
+        requisicao.setDestino(destino);
+
+        Usuario usuarioCliente = UsuarioFirebase.getDadosUsuarioLogado();
+        usuarioCliente.setLatitude(String.valueOf(localCliente.latitude));
+        usuarioCliente.setLongitude(String.valueOf(localCliente.longitude));
+
+        requisicao.setCliente(usuarioCliente);
+        requisicao.setStatus(Requisicao.STATUS_AGUARDANDO);
+        requisicao.salvar();
+
+        linearLayoutDestino.setVisibility(View.GONE);
+        btnChamarPrestador.setText("Cancelar");
+
+
+    }
+
     private Address recuperarEndereco(String endereco){
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         try {
@@ -157,17 +249,17 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
             public void onLocationChanged(Location location) {
                 double latitude = location.getLatitude();
                 double longitude = location.getLongitude();
-                LatLng meuLocal = new LatLng(latitude, longitude);
+                localCliente = new LatLng(latitude, longitude);
 
                 mMap.clear();
                 mMap.addMarker(
                         new MarkerOptions()
-                                .position(meuLocal)
+                                .position(localCliente)
                                 .title("Meu Local")
                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.cliente))
                 );
                 mMap.moveCamera(
-                        CameraUpdateFactory.newLatLngZoom(meuLocal, 15)
+                        CameraUpdateFactory.newLatLngZoom(localCliente, 15)
                 );
             }
 
@@ -190,7 +282,7 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(
                     LocationManager.NETWORK_PROVIDER,
-                    5000,
+                    0,
                     10,
                     locationListener
             );
@@ -221,8 +313,12 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
         setSupportActionBar(toolbar);
 
         localDestino = findViewById(R.id.localDestino);
+        linearLayoutDestino = findViewById(R.id.linearLayotDestino);
+        btnChamarPrestador = findViewById(R.id.btnChamarPrestador);
+        checkLocal = findViewById(R.id.checkLocal);
 
         autenticacao = ConfiguracaoFirebase.getFirebaseAuth();
+        firebaseRef = ConfiguracaoFirebase.getFirebaseDatabase();
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
