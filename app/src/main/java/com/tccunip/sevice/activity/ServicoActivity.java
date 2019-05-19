@@ -7,12 +7,14 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.Button;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -20,15 +22,33 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import com.tccunip.sevice.R;
+import com.tccunip.sevice.config.ConfiguracaoFirebase;
+import com.tccunip.sevice.model.Requisicao;
+import com.tccunip.sevice.model.Usuario;
 
 public class ServicoActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+    private Button btnAceitarServico;
 
     private GoogleMap mMap;
     private LocationManager locationManager;
     private LocationListener locationListener;
     private LatLng localPrestador;
+    private LatLng localCliente;
+    private Usuario prestador;
+    private Usuario cliente;
+    private String idRequisicao;
+    private Requisicao requisicao;
+    private DatabaseReference firebaseRef;
+    private Marker marcadorPrestador;
+    private Marker marcadorCliente;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +56,89 @@ public class ServicoActivity extends AppCompatActivity implements OnMapReadyCall
         setContentView(R.layout.activity_servico);
 
         inicializarComponentes();
+
+        if (getIntent().getExtras().containsKey("idRequisicao") && getIntent().getExtras().containsKey("prestador")){
+            Bundle extras = getIntent().getExtras();
+            prestador = (Usuario)extras.getSerializable("prestador");
+            idRequisicao = extras.getString("idRequisicao");
+            verificaStatusRequisicao();
+        }
+    }
+
+    private void verificaStatusRequisicao(){
+        final DatabaseReference requisicoes = firebaseRef.child("requisicoes").child(idRequisicao);
+        requisicoes.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                requisicao = dataSnapshot.getValue(Requisicao.class);
+
+                cliente = requisicao.getCliente();
+                localCliente = new LatLng(
+                        Double.parseDouble(cliente.getLatitude()),
+                        Double.parseDouble(cliente.getLongitude())
+                );
+
+                switch (requisicao.getStatus()){
+                    case Requisicao.STATUS_AGUARDANDO:
+                        requisicaoAguardando();
+                        break;
+                    case Requisicao.STATUS_A_CAMINHO:
+                        requisicaoACaminho();
+                        break;
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+    }
+
+    private void requisicaoAguardando(){
+        btnAceitarServico.setText("Aceitar serviço");
+    }
+
+    private void requisicaoACaminho(){
+        btnAceitarServico.setText("A caminho do local");
+
+        adicionarMarcadorPrestador(localPrestador, prestador.getNome());
+        adicionarMarcadorCliente(localCliente, cliente.getNome());
+    }
+
+    private void adicionarMarcadorPrestador(LatLng localizacao, String titulo){
+
+        if (marcadorPrestador != null){
+            marcadorPrestador.remove();
+        }
+
+        marcadorPrestador = mMap.addMarker(
+                new MarkerOptions()
+                        .position(localizacao)
+                        .title(titulo)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.prestador))
+        );
+        mMap.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(localizacao, 15)
+        );
+    }
+
+    private void adicionarMarcadorCliente(LatLng localizacao, String titulo){
+
+        if (marcadorCliente != null){
+            marcadorCliente.remove();
+        }
+
+        marcadorCliente = mMap.addMarker(
+                new MarkerOptions()
+                        .position(localizacao)
+                        .title(titulo)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.prestador))
+        );
+        mMap.moveCamera(
+                CameraUpdateFactory.newLatLngZoom(localizacao, 15)
+        );
     }
 
     /**
@@ -103,6 +206,12 @@ public class ServicoActivity extends AppCompatActivity implements OnMapReadyCall
     }
 
     public void aceitarServico(View view){
+        requisicao = new Requisicao();
+        requisicao.setId(idRequisicao);
+        requisicao.setPrestador(prestador);
+        requisicao.setStatus(Requisicao.STATUS_A_CAMINHO);
+
+        requisicao.atualizar();
 
     }
 
@@ -113,6 +222,9 @@ public class ServicoActivity extends AppCompatActivity implements OnMapReadyCall
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle("Local do serviço");
 
+        btnAceitarServico = findViewById(R.id.btnAceitarServico);
+
+        firebaseRef = ConfiguracaoFirebase.getFirebaseDatabase();
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()

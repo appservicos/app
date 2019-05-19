@@ -148,6 +148,8 @@ public class ClienteActivity extends AppCompatActivity implements OnMapReadyCall
     }
 
     public void chamarPrestador(View view){
+        
+
         if (!prestadorChamado){
 
             String enderecoDestino = localDestino.getText().toString();
