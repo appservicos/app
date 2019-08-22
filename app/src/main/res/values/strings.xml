@@ -1,26 +1,3 @@
 <resources>
-    <string name="app_name">Sevice</string>
-    <string name="title_activity_maps">Map</string>
-    <string name="descricaoLogo">Logo do app</string>
-    <string name="btnCadastrar">Cadastrar-se</string>
-    <string name="btnEntrar">Entrar</string>
-    <string name="tituloTelaCadastro">Cadastre sua conta</string>
-    <string name="tituloTelaLogin">Acesse sua conta</string>
-    <string name="hintLoginEmail">E-mail</string>
-    <string name="hintLoginSenha">Senha</string>
-    <string name="hintCadastroNome">Nome completo</string>
-    <string name="escolhaCadastroCliente">Cliente</string>
-    <string name="descricaoTipoCadastro">Tipo de cadasto:</string>
-    <string name="escolhaCadastroPrestador">Prestador</string>
-    <string name="title_activity_cliente">ClienteActivity</string>
-    <string name="meu_local">Meu local</string>
-    <string name="digite_seu_destino">Endereço</string>
-    <string name="servico_exemplo">*EXEMPLO* Encanador</string>
-    <string name="chamar_prestador">Chamar Prestador</string>
-    <string name="aceitar_servico">Aceitar serviço</string>
-    <string name="utilizar_local_atual">Utilizar local atual</string>
-    <string name="aguardando_requisicoes">Aguardando Requisiões</string>
-    <string name="nome_do_cliente">Nome do cliente</string>
-    <string name="_0_km_aproximadamente">0 km - aproximadamente</string>
-    <string name="title_activity_servico">ServicoActivity</string>
+    <string name="app_name">services</string>
 </resources>
